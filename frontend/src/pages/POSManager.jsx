@@ -14,7 +14,8 @@ function POSManager() {
   const fetchOrders = async () => {
     try {
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/sales-orders`);
-      setOrders(res.data);
+      // ዳታው በትክክል አሬ (Array) መሆኑን ማረጋገጥ
+      setOrders(Array.isArray(res.data) ? res.data : (res.data.orders || []));
       setLoading(false);
     } catch (error) {
       console.error('ትዕዛዞችን ማምጣት አልተቻለም:', error);
@@ -29,14 +30,14 @@ function POSManager() {
   }, []);
 
   const openOrder = (orderToOpen) => {
-    // 🚀 አሁን የተጠናቀቁትንም መክፈት እና ማየት ይቻላል (ለማረጋገጫ)
     setEditingOrder(JSON.parse(JSON.stringify(orderToOpen))); 
   };
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (!searchCode) return;
-    const foundOrder = orders.find(o => o.short_code && o.short_code.toUpperCase() === searchCode.toUpperCase());
+    const safeOrders = Array.isArray(orders) ? orders : [];
+    const foundOrder = safeOrders.find(o => o.short_code && o.short_code.toUpperCase() === searchCode.toUpperCase());
     
     if (foundOrder) {
       openOrder(foundOrder);
@@ -53,7 +54,6 @@ function POSManager() {
   };
 
   const updateOrderItemQuantity = (itemId, amount) => {
-    // የተጠናቀቀ ከሆነ ብዛት መጨመር/መቀነስ አይቻልም
     if (!editingOrder || editingOrder.status === 'COMPLETED') return;
     
     const updatedItems = editingOrder.items.map(item => {
@@ -80,12 +80,17 @@ function POSManager() {
   const completeOrder = async () => {
     if (window.confirm('ይህን ሽያጭ አረጋግጠው ማጠናቀቅ ይፈልጋሉ? \n(ይህ እርምጃ ከክምችት ላይ ዕቃ ይቀንሳል)')) {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/sales-orders`);
+        await axios.put(`${import.meta.env.VITE_API_URL}/sales-orders/${editingOrder.id}`, {
+          status: 'COMPLETED',
+          items: editingOrder.items,
+          total_amount: editingOrder.total_amount
+        });
         alert('✅ ሽያጩ በተሳካ ሁኔታ ተጠናቋል!');
         setEditingOrder(null);
         setSearchCode('');
         fetchOrders();
       } catch (error) {
+        console.error('ስህተት:', error);
         alert('ስህተት ተፈጥሯል!');
       }
     }
@@ -93,11 +98,11 @@ function POSManager() {
 
   if (loading) return <div className="text-center p-10 font-bold text-gray-500">መረጃ በመጫን ላይ ነው... ⏳</div>;
 
-  // 🚀 ትዕዛዞችን ለየብቻ ማጣራት
-  const pendingOrders = orders.filter(o => o.status === 'PENDING');
-  const completedOrders = orders.filter(o => o.status === 'COMPLETED');
+  // 🚀 ደህንነቱ የተጠበቀ ማጣሪያ (Safe filter)
+  const safeOrders = Array.isArray(orders) ? orders : [];
+  const pendingOrders = safeOrders.filter(o => o.status === 'PENDING');
+  const completedOrders = safeOrders.filter(o => o.status === 'COMPLETED');
   
-  // የትኛው ይታይ?
   const displayedOrders = activeTab === 'PENDING' ? pendingOrders : completedOrders;
   const extraDetails = getExtraDetails(); 
 
@@ -143,19 +148,18 @@ function POSManager() {
             <div>
               <h4 className="font-bold text-gray-800 mb-4 border-b pb-2">የተዘዙ ዕቃዎች</h4>
               <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
-                {editingOrder.items.map(item => (
+                {editingOrder.items?.map(item => (
                   <div key={item.id} className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-200">
                     <div className="flex-1 pr-4">
                       <p className="text-sm font-bold text-slate-800 line-clamp-1">{item.title}</p>
-                      <p className="text-xs text-gray-500 mt-1">{item.price.toLocaleString()} ብር/አንዱ</p>
+                      <p className="text-xs text-gray-500 mt-1">{item.price?.toLocaleString()} ብር/አንዱ</p>
                     </div>
                     
-                    {/* 🚀 የተጠናቀቀ ከሆነ የመቀነሻ/መጨመሪያ ቁልፉ ይጠፋል */}
                     {editingOrder.status === 'PENDING' ? (
                       <div className="flex items-center border border-gray-300 rounded-md bg-white">
-                        <button onClick={() => updateOrderItemQuantity(item.id, -1)} className="px-3 py-1 font-bold text-red-500 hover:bg-gray-100">-</button>
+                        <button type="button" onClick={() => updateOrderItemQuantity(item.id, -1)} className="px-3 py-1 font-bold text-red-500 hover:bg-gray-100">-</button>
                         <span className="px-3 py-1 font-black bg-gray-50 border-x border-gray-300">{item.quantity}</span>
-                        <button onClick={() => updateOrderItemQuantity(item.id, 1)} className="px-3 py-1 font-bold text-green-600 hover:bg-gray-100">+</button>
+                        <button type="button" onClick={() => updateOrderItemQuantity(item.id, 1)} className="px-3 py-1 font-bold text-green-600 hover:bg-gray-100">+</button>
                       </div>
                     ) : (
                       <div className="font-black text-slate-900 px-3 py-1 bg-gray-200 rounded">
@@ -171,7 +175,6 @@ function POSManager() {
                 <span className="font-black text-2xl text-amber-400">{editingOrder.total_amount?.toLocaleString()} ብር</span>
               </div>
               
-              {/* 🚀 የተጠናቀቀ ከሆነ ማጠናቀቂያ በተን ይጠፋና አረንጓዴ ማረጋገጫ ይመጣል */}
               {editingOrder.status === 'PENDING' ? (
                 <button onClick={completeOrder} className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl shadow-lg transition-transform active:scale-95 text-lg">
                   ✅ ክፍያ ተቀብያለሁ (ሽያጭ አጠናቅ)
@@ -219,18 +222,19 @@ function POSManager() {
         </div>
       )}
 
-      {/* 🚀 የትዕዛዞች ዝርዝር እና መምረጫ (Tabs) */}
       {!editingOrder && (
         <div className="mt-8">
           
           <div className="flex border-b border-gray-200 mb-6">
             <button 
+              type="button"
               onClick={() => setActiveTab('PENDING')}
               className={`px-6 py-3 font-black text-sm transition-all ${activeTab === 'PENDING' ? 'border-b-4 border-amber-400 text-slate-900' : 'text-gray-400 hover:text-gray-600'}`}
             >
               አዳዲስ ትዕዛዞች <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full ml-1 text-xs">{pendingOrders.length}</span>
             </button>
             <button 
+              type="button"
               onClick={() => setActiveTab('COMPLETED')}
               className={`px-6 py-3 font-black text-sm transition-all ${activeTab === 'COMPLETED' ? 'border-b-4 border-green-500 text-green-700' : 'text-gray-400 hover:text-gray-600'}`}
             >
@@ -255,6 +259,7 @@ function POSManager() {
                   <div className="flex justify-between items-center">
                     <span className="font-black text-slate-900">{order.total_amount?.toLocaleString()} ብር</span>
                     <button 
+                      type="button"
                       onClick={() => openOrder(order)} 
                       className={`text-xs font-bold px-3 py-1.5 rounded transition-colors cursor-pointer ${order.status === 'COMPLETED' ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-amber-100 text-amber-800 hover:bg-amber-200'}`}
                     >
