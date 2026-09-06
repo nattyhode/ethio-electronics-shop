@@ -31,8 +31,8 @@ function CustomerStorefront() {
 
   const fetchData = async () => {
     try {
-      const prodRes = await axios.get('http://localhost:5000/api/products');
-      const catRes = await axios.get('http://localhost:5000/api/categories');
+      const prodRes = await axios.get(`${import.meta.env.VITE_API_URL}/products`);
+      const catRes = await axios.get(`${import.meta.env.VITE_API_URL}/categories`);
       setProducts(prodRes.data);
       setCategories(catRes.data);
     } catch (error) {
@@ -65,7 +65,7 @@ function CustomerStorefront() {
   const deliveryFee = customerInfo.needsDelivery ? 200 : 0; 
   const grandTotal = subtotal + taxAmount + deliveryFee;
 
-  // 🚀 አዲሱ የ Checkout አሰራር (FormData ለፎቶ እና Short Code)
+  // 🚀 የ Checkout አሰራር (FormData ለፎቶ እና Short Code) - ከ Render Backend ጋር የተገናኘ
   const handleCheckoutSubmit = async (e) => {
     e.preventDefault();
     if (cart.length === 0) return alert('ቅርጫትዎ ባዶ ነው!');
@@ -92,7 +92,7 @@ function CustomerStorefront() {
     }
 
     try {
-      await axios.post('http://localhost:5000/api/sales-orders', formData, {
+      await axios.post(`${import.meta.env.VITE_API_URL}/sales-orders`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
@@ -103,6 +103,7 @@ function CustomerStorefront() {
       setCustomerInfo({ name: '', phone: '', needsDelivery: false, address: '', notes: '' });
       localStorage.removeItem('ethioElectronicsCart'); 
     } catch (error) {
+      console.error('Checkout error:', error);
       alert('ስህተት ተፈጥሯል! እባክዎ እንደገና ይሞክሩ።');
     }
   };
@@ -117,7 +118,7 @@ function CustomerStorefront() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans relative pb-20 md:pb-0">
       
-      {/* 🚀 አዲሱ የትዕዛዝ ማረጋገጫ (Success Modal) */}
+      {/* 🚀 የትዕዛዝ ማረጋገጫ (Success Modal) */}
       {orderSuccessData && (
         <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white p-8 rounded-3xl max-w-sm w-full text-center shadow-2xl animate-fade-in-up">
@@ -160,7 +161,7 @@ function CustomerStorefront() {
         </div>
       </header>
 
-      {/* Main Content (Products & Categories) */}
+      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-2 md:px-4 py-4 md:py-8 flex flex-col md:flex-row gap-4 md:gap-8">
         <aside className="w-full md:w-56 flex-shrink-0">
           <div className="bg-white md:rounded-2xl shadow-sm border-b md:border border-gray-100 p-2 md:p-4 sticky top-[104px] md:top-28 z-30">
@@ -202,7 +203,7 @@ function CustomerStorefront() {
         </main>
       </div>
 
-      {/* 🚀 Cart & Checkout Drawer */}
+      {/* Cart & Checkout Drawer */}
       {isCartOpen && <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-all duration-300" onClick={() => setIsCartOpen(false)}></div>}
       <div className={`fixed top-0 right-0 h-full w-full sm:w-[450px] bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col ${isCartOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="bg-slate-900 text-white p-4 flex justify-between items-center shrink-0">
@@ -267,7 +268,6 @@ function CustomerStorefront() {
                     <label htmlFor="delivery" className="text-xs font-bold text-slate-900 cursor-pointer">በሞባይል ከፍዬ በዕቃ ማድረሻ (Delivery) እፈልጋለሁ</label>
                   </div>
                   
-                  {/* 🚀 ማድረሻ ከፈለገ ፎቶ መጫኛ (Screenshot) ይመጣል */}
                   {customerInfo.needsDelivery && (
                     <div className="mt-3 space-y-3 animate-fade-in-up">
                       <div>
