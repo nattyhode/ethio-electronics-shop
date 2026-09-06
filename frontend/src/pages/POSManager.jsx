@@ -13,7 +13,7 @@ function POSManager() {
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/sales-orders');
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/sales-orders`);
       setOrders(res.data);
       setLoading(false);
     } catch (error) {
@@ -80,10 +80,7 @@ function POSManager() {
   const completeOrder = async () => {
     if (window.confirm('ይህን ሽያጭ አረጋግጠው ማጠናቀቅ ይፈልጋሉ? \n(ይህ እርምጃ ከክምችት ላይ ዕቃ ይቀንሳል)')) {
       try {
-        await axios.put(`http://localhost:5000/api/sales-orders/${editingOrder.id}`, { 
-          items: editingOrder.items,
-          total_amount: editingOrder.total_amount
-        });
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/sales-orders`);
         alert('✅ ሽያጩ በተሳካ ሁኔታ ተጠናቋል!');
         setEditingOrder(null);
         setSearchCode('');
