@@ -11,9 +11,8 @@ function CustomerStorefront() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckout, setIsCheckout] = useState(false);
 
-  // 🚀 አዳዲስ ስቴቶች
   const [paymentScreenshot, setPaymentScreenshot] = useState(null);
-  const [orderSuccessData, setOrderSuccessData] = useState(null); // የተሳካ ትዕዛዝ ኮድ ለማሳየት
+  const [orderSuccessData, setOrderSuccessData] = useState(null);
 
   const [customerInfo, setCustomerInfo] = useState({
     name: '', phone: '', needsDelivery: false, address: '', notes: ''
@@ -22,7 +21,14 @@ function CustomerStorefront() {
   useEffect(() => {
     fetchData();
     const savedCart = localStorage.getItem('ethioElectronicsCart');
-    if (savedCart) setCart(JSON.parse(savedCart));
+    if (savedCart) {
+      try {
+        const parsed = JSON.parse(savedCart);
+        setCart(Array.isArray(parsed) ? parsed : []);
+      } catch (e) {
+        setCart([]);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -33,17 +39,21 @@ function CustomerStorefront() {
     try {
       const prodRes = await axios.get(`${import.meta.env.VITE_API_URL}/products`);
       const catRes = await axios.get(`${import.meta.env.VITE_API_URL}/categories`);
-      setProducts(prodRes.data);
-      setCategories(catRes.data);
+      // 🚀 ዳታው በእርግጠኝነት Array መሆኑን እናረጋግጣለን (ነጭ ስክሪን ይከላከላል)
+      setProducts(Array.isArray(prodRes.data) ? prodRes.data : []);
+      setCategories(Array.isArray(catRes.data) ? catRes.data : []);
     } catch (error) {
       console.error('መረጃ ማምጣት አልተቻለም:', error);
+      setProducts([]);
+      setCategories([]);
     }
   };
 
   const addToCart = (product) => {
-    const existingItem = cart.find(item => item.id === product.id);
-    if (existingItem) setCart(cart.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
-    else setCart([...cart, { ...product, quantity: 1 }]);
+    const safeCart = Array.isArray(cart) ? cart : [];
+    const existingItem = safeCart.find(item => item.id === product.id);
+    if (existingItem) setCart(safeCart.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
+    else setCart([...safeCart, { ...product, quantity: 1 }]);
   };
 
   const updateQuantity = (id, amount) => {
@@ -58,20 +68,19 @@ function CustomerStorefront() {
 
   const removeFromCart = (id) => setCart(cart.filter(item => item.id !== id));
 
-  const subtotal = cart.reduce((total, item) => total + (item.selling_price * item.quantity), 0);
-  const totalItemsCount = cart.reduce((count, item) => count + item.quantity, 0);
+  const safeCart = Array.isArray(cart) ? cart : [];
+  const subtotal = safeCart.reduce((total, item) => total + ((item.selling_price || 0) * (item.quantity || 1)), 0);
+  const totalItemsCount = safeCart.reduce((count, item) => count + (item.quantity || 1), 0);
   const taxRate = 0.15;
   const taxAmount = subtotal * taxRate;
   const deliveryFee = customerInfo.needsDelivery ? 200 : 0; 
   const grandTotal = subtotal + taxAmount + deliveryFee;
 
-  // 🚀 የ Checkout አሰራር (FormData ለፎቶ እና Short Code) - ከ Render Backend ጋር የተገናኘ
   const handleCheckoutSubmit = async (e) => {
     e.preventDefault();
-    if (cart.length === 0) return alert('ቅርጫትዎ ባዶ ነው!');
+    if (safeCart.length === 0) return alert('ቅርጫትዎ ባዶ ነው!');
     if (customerInfo.needsDelivery && !paymentScreenshot) return alert('እባክዎ የክፍያዎን ስክሪንሾት ያስገቡ!');
 
-    // አጭር ኮድ ማመንጨት (ምሳሌ፡ 8A3K9)
     const shortCode = Math.random().toString(36).substring(2, 7).toUpperCase();
     
     const formData = new FormData();
@@ -80,7 +89,7 @@ function CustomerStorefront() {
     formData.append('short_code', shortCode);
     formData.append('status', 'PENDING');
     formData.append('total_amount', grandTotal);
-    formData.append('items', JSON.stringify(cart.map(item => ({ id: item.id, title: item.title, quantity: item.quantity, price: item.selling_price }))));
+    formData.append('items', JSON.stringify(safeCart.map(item => ({ id: item.id, title: item.title, quantity: item.quantity, price: item.selling_price }))));
     formData.append('extra_details', JSON.stringify({
       delivery_requested: customerInfo.needsDelivery,
       delivery_address: customerInfo.address,
@@ -96,7 +105,6 @@ function CustomerStorefront() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
-      // ሲሳካ ኮዱን ለደንበኛው እናሳያለን
       setOrderSuccessData({ shortCode, isDelivery: customerInfo.needsDelivery });
       
       setCart([]); setPaymentScreenshot(null);
@@ -108,17 +116,21 @@ function CustomerStorefront() {
     }
   };
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  // 🚀 Safe filter (Error: e.filter is not a function እንዳይመጣ ይከላከላል)
+  const safeProducts = Array.isArray(products) ? products : [];
+  const safeCategories = Array.isArray(categories) ? categories : [];
+
+  const filteredProducts = safeProducts.filter(product => {
+    if (!product) return false;
+    const matchesSearch = product.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           (product.brand && product.brand.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesCategory = selectedCategory === 'ALL' || product.category_id.toString() === selectedCategory.toString();
+    const matchesCategory = selectedCategory === 'ALL' || product.category_id?.toString() === selectedCategory.toString();
     return matchesSearch && matchesCategory;
   });
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans relative pb-20 md:pb-0">
       
-      {/* 🚀 የትዕዛዝ ማረጋገጫ (Success Modal) */}
       {orderSuccessData && (
         <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white p-8 rounded-3xl max-w-sm w-full text-center shadow-2xl animate-fade-in-up">
@@ -168,7 +180,7 @@ function CustomerStorefront() {
             <h3 className="font-black text-gray-800 border-b-2 border-amber-400 pb-2 mb-3 uppercase tracking-widest text-xs hidden md:block">ምድቦች</h3>
             <ul className="flex md:flex-col overflow-x-auto gap-2 md:gap-1 pb-2 md:pb-0 scrollbar-hide">
               <li className="flex-shrink-0"><button onClick={() => setSelectedCategory('ALL')} className={`w-full px-4 py-2 rounded-full md:rounded-xl text-xs md:text-sm font-bold ${selectedCategory === 'ALL' ? 'bg-slate-900 text-white' : 'bg-gray-100 text-gray-600'}`}>ሁሉም</button></li>
-              {categories.map((cat) => (
+              {safeCategories.map((cat) => (
                 <li key={cat.id} className="flex-shrink-0"><button onClick={() => setSelectedCategory(cat.id)} className={`w-full px-4 py-2 rounded-full md:rounded-xl text-xs md:text-sm font-bold ${selectedCategory === cat.id ? 'bg-slate-900 text-white' : 'bg-gray-100 text-gray-600'}`}>{cat.name}</button></li>
               ))}
             </ul>
@@ -212,11 +224,11 @@ function CustomerStorefront() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 bg-gray-50">
-          {cart.length === 0 ? (
+          {safeCart.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400"><span className="text-6xl mb-6 opacity-20">🛍️</span><p className="font-bold">ባዶ ነው</p></div>
           ) : (
             <div className="space-y-3">
-              {cart.map((item) => (
+              {safeCart.map((item) => (
                 <div key={item.id} className="bg-white p-2.5 rounded-2xl shadow-sm border border-gray-100 flex gap-3 relative group">
                   <button onClick={() => removeFromCart(item.id)} className="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs shadow-sm z-10">✕</button>
                   <div className="w-16 h-16 bg-gray-50 rounded-xl border flex-shrink-0 flex items-center justify-center overflow-hidden">
@@ -225,7 +237,7 @@ function CustomerStorefront() {
                   <div className="flex-1 flex flex-col justify-between py-1">
                     <h4 className="text-[12px] font-bold text-gray-800 line-clamp-2 pr-4">{item.title}</h4>
                     <div className="flex justify-between items-end mt-1">
-                      <span className="font-black text-blue-600 text-[13px]">{(item.selling_price * item.quantity).toLocaleString()} ብር</span>
+                      <span className="font-black text-blue-600 text-[13px]">{((item.selling_price || 0) * (item.quantity || 1)).toLocaleString()} ብር</span>
                       <div className="flex items-center border border-gray-200 rounded-lg bg-white h-7">
                         <button onClick={() => updateQuantity(item.id, -1)} className="px-2.5 py-1 font-bold">-</button>
                         <span className="px-2 py-1 text-xs font-black bg-gray-50 border-x">{item.quantity}</span>
@@ -239,7 +251,7 @@ function CustomerStorefront() {
           )}
         </div>
 
-        {cart.length > 0 && (
+        {safeCart.length > 0 && (
           <div className="bg-white border-t p-4 shrink-0">
             {!isCheckout ? (
               <>
