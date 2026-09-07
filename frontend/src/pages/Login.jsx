@@ -13,7 +13,7 @@ function Login({ onLogin }) {
     e.preventDefault();
     setError('');
     try {
-      const res = await axios.post(${import.meta.env.VITE_API_URL}/login, credentials);
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/login`, credentials);
       // ሎጊን ሲሳካ የሠራተኛውን መረጃ ወደ ዋናው አፕ እንልካለን
       onLogin(res.data.user);
     } catch (err) {
