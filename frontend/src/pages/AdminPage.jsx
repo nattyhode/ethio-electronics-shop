@@ -16,10 +16,10 @@ function AdminPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // ይህ ዳታውን ወደ ባክኤንድ የሚልክ ኮድ ነው
-      const response = await axios.post('http://localhost:5000/api/products', product);
+      // 🚀 ሎካልሆስት ወደ ዳይናሚክ ዩአርኤል ተቀይሯል
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/products`, product);
       alert('ዕቃው በተሳካ ሁኔታ ተመዝግቧል! 🚀');
-      // ፎርሙን ባዶ ለማድረግ
+      
       setProduct({ title: '', selling_price: '', stock_main_store: '', stock_warehouse_1: '' });
     } catch (error) {
       alert('ስህተት ተፈጥሯል! ዕቃው አልተመዘገበም።');

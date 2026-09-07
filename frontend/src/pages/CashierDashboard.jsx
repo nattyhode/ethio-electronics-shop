@@ -7,7 +7,8 @@ function CashierDashboard({ user, onLogout }) {
   // ለካሽር የተላኩ ጥያቄዎችን (Pending Orders) ከሰርቨር ማምጣት
   const fetchOrders = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/sales-orders');
+      // 🚀 ሎካልሆስት ወደ ዳይናሚክ ዩአርኤል ተቀይሯል (ነጠላ ኮቴሽን ወደ ባክቲክ ተቀይሯል)
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/sales-orders`);
       // PENDING የሆኑትን ብቻ ማጣራት
       const pendingOrders = res.data.filter(ord => ord.status === 'PENDING');
       setOrders(pendingOrders);
@@ -29,7 +30,8 @@ function CashierDashboard({ user, onLogout }) {
     if (!confirmPayment) return;
 
     try {
-      await axios.put(`http://localhost:5000/api/sales-orders/${order.id}`, {
+      // 🚀 እዚህም ሎካልሆስት ተቀይሯል (ባክቲክ በውስጡ ስለነበረው በጥንቃቄ ተስተካክሏል)
+      await axios.put(`${import.meta.env.VITE_API_URL}/sales-orders/${order.id}`, {
         items: order.items
       });
 
@@ -66,7 +68,7 @@ function CashierDashboard({ user, onLogout }) {
           {orders.length === 0 ? (
             <div className="bg-white p-12 rounded-xl shadow-sm border text-center text-gray-400 mt-10">
               <p className="text-4xl mb-2">⏳</p>
-              <p className="text-base font-medium">እስካሁን ከሻጮች የተላከ አዲስ የሽያጭ ጥያቄ የለም።</p>
+              <p className="text-base font-medium">እስካሁን ከሻጮች የተላከ አዲስ የሽያጭ ጥያቄ የለም。</p>
               <p className="text-xs text-gray-400 mt-1">ሻጮች ዕቃዎችን መርጠው "ለካሽር ላክ" ሲሉ እዚህ ጋር ወዲያውኑ ይመጣል።</p>
             </div>
           ) : (

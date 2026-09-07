@@ -13,9 +13,10 @@ function SalesDashboard({ user, onLogout }) {
 
   const fetchData = async () => {
     try {
-      const prodRes = await axios.get('http://localhost:5000/api/products');
+      // 🚀 ሎካልሆስት ወደ ዳይናሚክ ዩአርኤል ተቀይሯል
+      const prodRes = await axios.get(`${import.meta.env.VITE_API_URL}/products`);
       setProducts(prodRes.data);
-      const catRes = await axios.get('http://localhost:5000/api/categories');
+      const catRes = await axios.get(`${import.meta.env.VITE_API_URL}/categories`);
       setCategories(catRes.data);
     } catch (error) {
       console.error('መረጃዎችን ማምጣት አልተቻለም:', error);
@@ -62,7 +63,8 @@ function SalesDashboard({ user, onLogout }) {
     }
 
     try {
-      await axios.post('http://localhost:5000/api/sales-orders', {
+      // 🚀 ሎካልሆስት ወደ ዳይናሚክ ዩአርኤል ተቀይሯል
+      await axios.post(`${import.meta.env.VITE_API_URL}/sales-orders`, {
         customer_name: customerName,
         customer_phone: customerPhone,
         items: cart,

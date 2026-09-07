@@ -44,7 +44,8 @@ function EmployeesManager() {
 
   const fetchEmployees = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/employees');
+      // 🚀 ሎካልሆስት ወደ ዳይናሚክ ዩአርኤል ተቀይሯል
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/employees`);
       setEmployees(res.data);
     } catch (error) {
       console.error('የሠራተኞችን መረጃ ማምጣት አልተቻለም:', error);
@@ -117,10 +118,12 @@ function EmployeesManager() {
       };
 
       if (isEditing) {
-        await axios.put(`http://localhost:5000/api/employees/${editingId}`, dataToSubmit);
+        // 🚀 ሎካልሆስት ወደ ዳይናሚክ ዩአርኤል ተቀይሯል (ባክቲክ ነበረው፣ በጥንቃቄ ተስተካክሏል)
+        await axios.put(`${import.meta.env.VITE_API_URL}/employees/${editingId}`, dataToSubmit);
         alert('የሠራተኛው መረጃ በተሳካ ሁኔታ ተስተካክሏል! ✏️');
       } else {
-        await axios.post('http://localhost:5000/api/employees', dataToSubmit);
+        // 🚀 ሎካልሆስት ወደ ዳይናሚክ ዩአርኤል ተቀይሯል
+        await axios.post(`${import.meta.env.VITE_API_URL}/employees`, dataToSubmit);
         alert('ሠራተኛው ከነ ፈቃዱ በተሳካ ሁኔታ ተመዝግቧል! 👤');
       }
       

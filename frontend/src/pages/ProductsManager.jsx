@@ -42,9 +42,10 @@ function ProductsManager({ user }) {
 
   const fetchData = async () => {
     try {
-      const prodRes = await axios.get('http://localhost:5000/api/products');
+      // 🚀 ሎካልሆስት ወደ ዳይናሚክ ዩአርኤል ተቀይሯል
+      const prodRes = await axios.get(`${import.meta.env.VITE_API_URL}/products`);
       setProducts(prodRes.data);
-      const catRes = await axios.get('http://localhost:5000/api/categories');
+      const catRes = await axios.get(`${import.meta.env.VITE_API_URL}/categories`);
       setCategories(catRes.data);
     } catch (error) {
       console.error('መረጃዎችን ማምጣት አልተቻለም:', error);
@@ -71,8 +72,9 @@ function ProductsManager({ user }) {
     const trimmedName = inlineCategoryName.trim();
     if (trimmedName === '') return;
     try {
-      const res = await axios.post('http://localhost:5000/api/categories', { name: trimmedName });
-      const catRes = await axios.get('http://localhost:5000/api/categories');
+      // 🚀 ሎካልሆስት ወደ ዳይናሚክ ዩአርኤል ተቀይሯል
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/categories`, { name: trimmedName });
+      const catRes = await axios.get(`${import.meta.env.VITE_API_URL}/categories`);
       setCategories(catRes.data);
       const targetCat = catRes.data.find(c => c.name.toLowerCase() === trimmedName.toLowerCase());
       if (targetCat) setNewProduct(prev => ({ ...prev, category_id: targetCat.id }));
@@ -139,12 +141,14 @@ function ProductsManager({ user }) {
       }
 
       if (isEditing) {
-        await axios.put(`http://localhost:5000/api/products/${editingId}`, formData, {
+        // 🚀 ሎካልሆስት ወደ ዳይናሚክ ዩአርኤል ተቀይሯል
+        await axios.put(`${import.meta.env.VITE_API_URL}/products/${editingId}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         alert('በተሳካ ሁኔታ ተስተካክሏል! ✏️');
       } else {
-        await axios.post('http://localhost:5000/api/products', formData, {
+        // 🚀 ሎካልሆስት ወደ ዳይናሚክ ዩአርኤል ተቀይሯል
+        await axios.post(`${import.meta.env.VITE_API_URL}/products`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         alert('ዕቃው ከነ ፎቶው በተሳካ ሁኔታ ተመዝግቧል! 🚀');
@@ -164,7 +168,8 @@ function ProductsManager({ user }) {
   const handleDelete = async (id) => {
     if (window.confirm('ይህንን ዕቃ በእርግጥ ማጥፋት ትፈልጋለህ?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/products/${id}`);
+        // 🚀 ሎካልሆስት ወደ ዳይናሚክ ዩአርኤል ተቀይሯል
+        await axios.delete(`${import.meta.env.VITE_API_URL}/products/${id}`);
         alert('ዕቃው በተሳካ ሁኔታ ተሰርዟል! 🗑️');
         fetchData();
       } catch (error) {
@@ -217,7 +222,8 @@ function ProductsManager({ user }) {
     };
 
     try {
-      await axios.put(`http://localhost:5000/api/products/${stockEntry.currentProduct.id}`, updatedProduct);
+      // 🚀 ሎካልሆስት ወደ ዳይናሚክ ዩአርኤል ተቀይሯል
+      await axios.put(`${import.meta.env.VITE_API_URL}/products/${stockEntry.currentProduct.id}`, updatedProduct);
       alert(`አዲስ ዕቃ ወደ ${loc === 'stock_main_store' ? 'ዋና ሱቅ' : 'መጋዘን 1'} ገቢ ሆኗል! 📦`);
       setShowStockModal(false);
       fetchData();
