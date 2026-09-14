@@ -2,7 +2,7 @@ import { useState } from 'react';
 import ProductsManager from './ProductsManager';
 import POSManager from './POSManager'; // 🚀 ይሄንን አዲሱን ጨምር
 // ካለህ EmployeesManager ን ከዚህ በታች ካለው ኮመንት አውጣው
-import EmployeesManager from './EmployeesManager'; 
+ import HRManager from './HRManager'; 
 
 function AdminDashboard({ user, onLogout }) {
   // የሰራተኛውን ፈቃዶች (Permissions) መለየት
@@ -115,8 +115,8 @@ function AdminDashboard({ user, onLogout }) {
             
             {activeMenu === 'products' && <ProductsManager user={user} />}
             
-            {activeMenu === 'employees' && <h1 className="text-3xl text-red-600 font-bold p-10">የሰራተኞች ገጽ እዚህ ጋር መታየት አለበት!</h1>}
-
+            {activeMenu === 'employees' && <HRManager user={user} />}
+            
             {activeMenu === 'pos' && <POSManager />}
             {activeMenu === 'dashboard' && (
               <div className="flex flex-col items-center justify-center h-[60vh] text-gray-400">

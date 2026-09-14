@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-function EmployeesManager() {
+function HRManager() {
   const [employees, setEmployees] = useState([]);
   const [showModal, setShowModal] = useState(false);
   
@@ -325,4 +325,4 @@ function EmployeesManager() {
   );
 }
 
-export default EmployeesManager;
+export default HRManager;
