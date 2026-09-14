@@ -115,7 +115,7 @@ function AdminDashboard({ user, onLogout }) {
             
             {activeMenu === 'products' && <ProductsManager user={user} />}
             
-            {activeMenu === 'employees' && <EmployeesManager user={user} /> }
+            {activeMenu === 'employees' && <h1 className="text-3xl text-red-600 font-bold p-10">የሰራተኞች ገጽ እዚህ ጋር መታየት አለበት!</h1>}
 
             {activeMenu === 'pos' && <POSManager />}
             {activeMenu === 'dashboard' && (
